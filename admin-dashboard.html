@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="admin-dashboard.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .dashboard-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .dashboard-buttons button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .dashboard-buttons button:hover {
+            background-color: #45a049;
+        }
+        .dashboard-buttons button.delete {
+            background-color: #f44336;
+        }
+        .dashboard-buttons button.delete:hover {
+            background-color: #e53935;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+
+        <div class="dashboard-buttons">
+            <button onclick="window.location.href='add-product.html'">Add New Product</button>
+            <button onclick="window.location.href='update-product.html'">Update Product</button>
+            <button onclick="window.location.href='view-products.html'">View Products</button>
+        </div>
+    </div>
+
+</body>
+</html>

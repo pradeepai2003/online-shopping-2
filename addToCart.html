@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Cart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar .logo {
+            font-size: 24px;
+        }
+        .navbar .nav-items {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar .nav-items a, .navbar .logout {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .navbar .logout:hover {
+            background-color: #ff4d4d;
+            border-radius: 5px;
+        }
+        .navbar a:hover {
+            background-color: #575757;
+            border-radius: 5px;
+        }
+        .container {
+            width: 80%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .cart-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .cart-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        .cart-item img {
+            max-width: 100px;
+            height: auto;
+            border-radius: 5px;
+        }
+        .cart-item h3 {
+            margin: 0;
+        }
+        .cart-item p {
+            font-size: 14px;
+            color: #555;
+        }
+        .cart-item .price {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quantity-controls button {
+            padding: 8px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .quantity-controls button:hover {
+            background-color: #218838;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .action-buttons button {
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .action-buttons button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">MyStore</div>
+        <div class="nav-items">
+            <a href="profile.html">Profile</a>
+            <a href="contact.html">Contact Us</a>
+        </div>
+        <div class="logout" onclick="logout()">Logout</div>
+    </div>
+
+    <!-- Cart Container -->
+    <div class="container">
+        <h1>Your Cart</h1>
+        <div class="cart-list" id="cartList">
+            <!-- Cart items will be dynamically rendered here -->
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+  apiKey: "AIzaSyDdsnjwxj2ruv9u1KHgvuREiy6q8kMhTAM",
+  authDomain: "online-shopping-b5ff3.firebaseapp.com",
+  projectId: "online-shopping-b5ff3",
+  storageBucket: "online-shopping-b5ff3.appspot.com",
+  messagingSenderId: "668913449650",
+  appId: "1:668913449650:web:be673e644a1b44cb4ea7ab"
+};
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore(app);
+
+        let userId = '';  // Store the logged-in user's ID
+        let cart = [];  // Cart array to hold products for the user
+
+        // Fetch the logged-in user's ID
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                userId = user.uid;
+                fetchCart(); // Fetch the cart once the user is authenticated
+            } else {
+                window.location.href = 'login.html';  // Redirect to login if not logged in
+            }
+        });
+
+        // Fetch cart items from Firestore
+        function fetchCart() {
+            db.collection("users").doc(userId).collection("cart").get()
+                .then(querySnapshot => {
+                    cart = [];
+                    querySnapshot.forEach(doc => {
+                        cart.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    displayCart();
+                })
+                .catch(error => {
+                    console.error("Error fetching cart:", error);
+                });
+        }
+
+        // Display cart items
+        function displayCart() {
+            const cartList = document.getElementById('cartList');
+            cartList.innerHTML = ''; // Clear current cart list
+
+            if (cart.length === 0) {
+                cartList.innerHTML = '<p>Your cart is empty.</p>';
+                return;
+            }
+
+            cart.forEach(item => {
+                const cartItem = document.createElement('div');
+                cartItem.classList.add('cart-item');
+
+                cartItem.innerHTML = `
+                    <img src="${item.imageURL}" alt="Product Image">
+                    <div>
+                        <h3>${item.name}</h3>
+                        <p class="price">₹${item.price.toFixed(2)}</p>
+                    </div>
+                    <div class="quantity-controls">
+                        <button onclick="updateQuantity('${item.id}', -1)">-</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="updateQuantity('${item.id}', 1)">+</button>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="buyNow('${item.id}')">Buy Now</button>
+                    </div>
+                `;
+
+                cartList.appendChild(cartItem);
+            });
+        }
+
+        // Update quantity in the cart
+        function updateQuantity(productId, change) {
+            const cartItem = cart.find(item => item.id === productId);
+            if (!cartItem) return;
+
+            const newQuantity = cartItem.quantity + change;
+            if (newQuantity <= 0) return; // Quantity can't be less than 1
+
+            // Update Firestore with the new quantity
+            db.collection("users").doc(userId).collection("cart").doc(productId).update({
+                quantity: newQuantity
+            })
+            .then(() => {
+                cartItem.quantity = newQuantity;
+                displayCart(); // Re-render the cart
+            })
+            .catch(error => {
+                console.error("Error updating quantity:", error);
+            });
+        }
+
+        // Buy Now function to redirect to the buy page
+        function buyNow(productId) {
+            // You can store this information in localStorage/sessionStorage or pass it as a URL parameter
+            const cartItem = cart.find(item => item.id === productId);
+            if (cartItem) {
+                // Store the product details in localStorage
+                localStorage.setItem('buyNowProduct', JSON.stringify(cartItem));
+
+                // Redirect to the buy now page
+                window.location.href = 'buyNow.html';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error("Error during logout:", error);
+            });
+        }
+    </script>
+</body>
+</html>

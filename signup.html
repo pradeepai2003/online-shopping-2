@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup</title>
+    <link rel="stylesheet" href="signup-style.css" />
+</head>
+<body>
+    <div class="signup-form">
+        <h2>Signup</h2>
+        <div class="form">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="signup-email" name="email" required />
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="signup-password" name="password" required />
+            </div>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="signup-username" name="username" required />
+            </div>
+            <button id="signup-submit">Signup</button>
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+    <div id="loading" class="loading" style="display: none;">Loading...</div>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Firestore SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+    apiKey: "AIzaSyDdsnjwxj2ruv9u1KHgvuREiy6q8kMhTAM",
+    authDomain: "online-shopping-b5ff3.firebaseapp.com",
+    projectId: "online-shopping-b5ff3",
+    storageBucket: "online-shopping-b5ff3.appspot.com",
+    messagingSenderId: "668913449650",
+    appId: "1:668913449650:web:be673e644a1b44cb4ea7ab"
+  };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Signup function to handle user registration
+        function signup() {
+            const email = document.getElementById("signup-email").value.toLowerCase();
+            const password = document.getElementById("signup-password").value;
+            const username = document.getElementById("signup-username").value;
+
+            if (email === "" || password === "" || username === "") {
+                alert("All fields are required!");
+                return; // Return early if validation fails
+            }
+
+            showLoading();
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+
+                    // Store user data in Firestore
+                    storeUserInFirestore(user.uid, email, username);
+                })
+                .catch((error) => {
+                    hideLoading();
+                    alert("Signup error: " + error.message);
+                });
+        }
+
+        // Function to store user data in Firestore
+        function storeUserInFirestore(uid, email, username) {
+            const usersRef = db.collection("users");
+
+            usersRef.doc(uid).set({
+                email: email,
+                username: username,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then(() => {
+                console.log("User data successfully stored in Firestore.");
+                hideLoading();
+                alert("Signup successful! Redirecting to login page...");
+                window.location.href = "login.html"; // Redirect to login page
+            })
+            .catch((error) => {
+                hideLoading();
+                console.error("Error storing user data in Firestore: ", error);
+                alert("Error storing user data: " + error.message);
+            });
+        }
+
+        // Function to show the loading spinner
+        function showLoading() {
+            document.getElementById("loading").style.display = "block";
+        }
+
+        // Function to hide the loading spinner
+        function hideLoading() {
+            document.getElementById("loading").style.display = "none";
+        }
+
+        // Attach the signup function to the submit button
+        document.getElementById("signup-submit").onclick = signup;
+    </script>
+</body>
+</html>

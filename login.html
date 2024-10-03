@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WristWorld</title>
+    <link rel="stylesheet" href="login-style.css" />
+  </head>
+  <body>
+    <div class="login-form">
+      <h2>Login</h2>
+      <div class="form">
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="login-email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="login-password" name="password" required />
+        </div>
+        <button id="submit">Submit</button>
+        <button id="admin">Admin Login</button>
+        <p>Don't have an account <a href="signup.html">Signup here</a></p>
+        
+      </div>
+    </div>
+    <div id="loading" class="loading"></div>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Firestore SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <script src="firebase.js"></script>
+    <script>
+      // Login function to handle user authentication
+      function login() {
+        var email = document.getElementById("login-email").value.toLowerCase();
+        var password = document.getElementById("login-password").value;
+
+        if (email === "" || password === "") {
+          alert("Input is blank!");
+        } else {
+          showLoading();
+          firebase
+            .auth()
+            .signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              var user = userCredential.user;
+              console.log(user);
+              localStorage.setItem('userID', user.uid);
+              getUserByEmail(user.email); // Pass email to the function that retrieves user data from Firestore
+            })
+            .catch((error) => {
+              hideLoading();
+              var errorMessage = error.message;
+              alert(errorMessage);
+            });
+        }
+      }
+
+      // Function to fetch user details from Firestore using email
+      function getUserByEmail(emailToFind) {
+        const db = firebase.firestore(); // Initialize Firestore
+        const usersRef = db.collection("users"); // Reference to the 'users' collection
+
+        // Query Firestore to find the user by their email
+        usersRef
+          .where("email", "==", emailToFind)
+          .get()
+          .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+              querySnapshot.forEach((doc) => {
+                var userData = doc.data(); // Retrieve user data
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("userkey", doc.id); // Store Firestore document ID in localStorage
+                window.location.href = "homepage.html"; // Redirect to homepage
+                hideLoading();
+              });
+            } else {
+              hideLoading();
+              alert("User not found in Firestore.");
+            }
+          })
+          .catch((error) => {
+            hideLoading();
+            alert("Error fetching user: " + error);
+          });
+      }
+
+      // Function to show the loading spinner
+      function showLoading() {
+        document.getElementById("loading").style.display = "block";
+      }
+
+      // Function to hide the loading spinner
+      function hideLoading() {
+        document.getElementById("loading").style.display = "none";
+      }
+
+      // Attach the login function to the submit button
+      document.getElementById("submit").onclick = login;
+
+      document.getElementById("admin").onclick = function () {
+    window.location.href = "adminLogin.html"; // Replace with the actual file name of your admin login page
+  };
+    </script>
+  </body>
+</html>
